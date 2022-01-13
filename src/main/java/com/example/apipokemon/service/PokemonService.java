@@ -1,64 +1,78 @@
 package com.example.apipokemon.service;
 
-
-import com.example.apipokemon.DTO.ListaPokemonDTO;
-import com.example.apipokemon.DTO.PokemonDTO;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
-import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.example.apipokemon.DTO.ListaPokemonDTO;
+import com.example.apipokemon.DTO.PokemonDTO;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class PokemonService {
 
+	private static final String BASEURL = "https://pokeapi.co/api/v2/pokemon";
 
+	public ListaPokemonDTO getPokemons()
+			throws IOException, InterruptedException {
 
-    private static final String BASEURL = "https://pokeapi.co/api/v2/pokemon";
+		int limit = 60;
+		ListaPokemonDTO listaPokemonDTOS = new ListaPokemonDTO();
+		listaPokemonDTOS.setResults(new ArrayList<>());
 
+		String address = BASEURL + "/?limit=" + limit + "&offset=0";
+		do {
+			HttpClient client = HttpClient.newHttpClient();
+			HttpRequest httpRequest = HttpRequest.newBuilder().GET()
+					.uri(URI.create(address)).build();
 
+			HttpResponse<String> response = client.send(httpRequest,
+					HttpResponse.BodyHandlers.ofString());
 
-    public ListaPokemonDTO getPokemons() throws IOException, InterruptedException {
+			if (response.statusCode() == 200) {
+				ObjectMapper mapper = new ObjectMapper();
 
-        int i = 1;
-        int offset = 60;
-        ListaPokemonDTO listaPokemonDTOS = new ListaPokemonDTO();
+				ListaPokemonDTO listaTemp = mapper.readValue(response.body(),
+						new TypeReference<ListaPokemonDTO>() {
+						});
 
-        do {HttpClient client = HttpClient.newHttpClient();
-            HttpRequest httpRequest = HttpRequest.newBuilder()
-                    .GET()
-                    .uri(URI.create(BASEURL + "/?limit="+ offset +"&offset=" + (offset * i)))
-                    .build();
+				if (listaTemp != null) {
+					listaPokemonDTOS.getResults()
+							.addAll(listaTemp.getResults());
+					
+					address = listaTemp.getNext();
+				} else {
+					break;
+				}
+			}
 
-            HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-            response.statusCode();
-            ObjectMapper mapper = new ObjectMapper();
-            listaPokemonDTOS = mapper.readValue(response.body(), new TypeReference<ListaPokemonDTO>() {});} while(i < 15);
-        i++;
-        return listaPokemonDTOS;
+		} while (address != null);
 
+		return listaPokemonDTOS;
 
-    }
+	}
 
-    public PokemonDTO getPokemonById(String id) throws IOException, InterruptedException {
+	public PokemonDTO getPokemonById(String id)
+			throws IOException, InterruptedException {
 
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest httpRequest = HttpRequest.newBuilder()
-                .GET()
-                .uri(URI.create(BASEURL + id + "/"))
-                .build();
+		HttpClient client = HttpClient.newHttpClient();
+		HttpRequest httpRequest = HttpRequest.newBuilder().GET()
+				.uri(URI.create(BASEURL + "/" + id)).build();
 
-        HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        response.statusCode();
-        ObjectMapper mapper = new ObjectMapper();
-        PokemonDTO pokemonDTO = mapper.readValue(response.body(), new TypeReference<PokemonDTO>() {});
+		HttpResponse<String> response = client.send(httpRequest,
+				HttpResponse.BodyHandlers.ofString());
+		response.statusCode();
+		ObjectMapper mapper = new ObjectMapper();
+		PokemonDTO pokemonDTO = mapper.readValue(response.body(),
+				new TypeReference<PokemonDTO>() {
+				});
 
-        return pokemonDTO;
-    }
+		return pokemonDTO;
+	}
 }
