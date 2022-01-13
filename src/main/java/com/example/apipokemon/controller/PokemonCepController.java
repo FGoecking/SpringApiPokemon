@@ -43,6 +43,8 @@ public class PokemonCepController {
 
         List<LocalDTO> localDTOList = new ArrayList<>();
         ResponseDTO responseDTO = new ResponseDTO();
+
+        //Busca e seta os detalhes deste pokemon
         PokemonDTO pokemonDTO = pokemonService.getPokemonById(id);
 
         responseDTO.setId(id);
@@ -50,9 +52,15 @@ public class PokemonCepController {
         responseDTO.setWeight(pokemonDTO.getWeight());
         responseDTO.setHeight(pokemonDTO.getHeight());
 
+        //Busca e seta os locais que o pokemon foi encontrado
        List<PokemonCep> pokemonCepList = pokemonCepRepository.getAllByPokemon(id);
        localDTOList = localService.getLocalByCep(pokemonCepList);
        responseDTO.setLocalDTOList(localDTOList);
+
+       //Seta a imagem se o pokemon já foi encontrado
+       if(pokemonCepRepository.existsByPokemon(id)){
+        responseDTO.setImagem("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"+ id +".png");
+       }
 
        return responseDTO;
     }

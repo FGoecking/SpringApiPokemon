@@ -12,4 +12,6 @@ public interface PokemonCepRepository extends JpaRepository<PokemonCep, Long> {
 
     List<PokemonCep> getAllByPokemon(String idpokemon);
 
+    Boolean existsByPokemon(String idPokemon);
+
 }
